@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      SA_PASSWORD: "Your_password123"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "Your_password123", "-Q", "SELECT 1"]
+      interval: 10s
+      retries: 5
+      start_period: 20s
+
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=localhost\MSSQLSERVER01;Database=master;Trusted_Connection=True;
+
+      - Jwt__Key=supersecretkey1234567890
+      - Jwt__Issuer=LojaEmbalagemApi
+      - Jwt__Audience=LojaEmbalagemApi
+    ports:
+      - "5000:80"
